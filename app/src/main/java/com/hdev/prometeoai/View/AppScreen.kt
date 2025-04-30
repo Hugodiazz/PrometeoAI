@@ -1,5 +1,6 @@
 package com.hdev.prometeoai.View
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,15 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddShoppingCart
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Summarize
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DismissibleDrawerSheet
@@ -34,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
@@ -77,11 +73,21 @@ fun AppScreen(
         content = {
             when(selectedItem) {
                 Icons.Default.Summarize -> ResumirScreen()
-                Icons.Default.Edit -> ChatScreen( "Reescribir" ,{},{})
-                Icons.Default.Book -> ChatScreen("Ruta de estudio",{},{})
+                Icons.Default.Edit -> blankScreen()
+                Icons.Default.Book -> blankScreen()
             }
         }
     )
+}
+@Composable
+fun blankScreen(){
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Text(text = "Soon to be implemented")
+    }
 }
 @Composable
 fun MyDismissibleNavigationDrawer(
