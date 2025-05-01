@@ -48,15 +48,15 @@ fun AppScreen(
 
     val items = remember {
         listOf(
-            Icons.Default.Summarize,
             Icons.Default.Edit,
+            Icons.Default.Summarize,
             Icons.Default.Book
         )
     }
     val modos = remember {
         listOf(
-            "Resumir",
             "Reescribir",
+            "Resumir",
             "Ruta de estudio"
         )
     }
@@ -72,8 +72,8 @@ fun AppScreen(
         drawerContent = {},
         content = {
             when(selectedItem) {
-                Icons.Default.Summarize -> ResumirScreen()
-                Icons.Default.Edit -> blankScreen()
+                Icons.Default.Edit -> ReescribirScreen()
+                Icons.Default.Summarize -> blankScreen()
                 Icons.Default.Book -> blankScreen()
             }
         }
