@@ -10,13 +10,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ReescribirScreen(
     viewModel: ResumirViewModel = viewModel()
 ){
-    val opciones: Map<String, List<String>> = mapOf(
-        "Tono" to listOf("Amigable", "Motivador", "Neutro", "Reflexivo", "Persuasivo"),
-        "Complejidad" to listOf("Sencillo", "Intermedio", "Avanzado", "Apto para niños"),
-        "Estilo" to listOf("Académico", "Creativo", "Informal", "Jurídico", "Literario", "Narrativo","Periodístico", "Profesional","Técnico"),
-    )
-    val mensajes by viewModel.messages.collectAsState()
 
+    val mensajes by viewModel.messages.collectAsState()
+    val opciones = viewModel.opciones
+    val uiState by viewModel.uiState.collectAsState()
     val seleccionados by viewModel.seleccionados.collectAsState()
 
     ChatScreen(
@@ -30,5 +27,6 @@ fun ReescribirScreen(
         onSeleccion = { grupo, opcion ->
             viewModel.seleccionarOpcion(grupo, opcion)
         },
+        uiState = uiState
     )
 }

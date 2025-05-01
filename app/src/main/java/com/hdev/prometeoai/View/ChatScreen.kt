@@ -3,9 +3,7 @@ package com.hdev.prometeoai.View
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hdev.prometeoai.Model.Mensaje
 import com.hdev.prometeoai.Model.Rol
+import com.hdev.prometeoai.UiState
 import com.hdev.prometeoai.ui.theme.PrometeoAITheme
 
 @Composable
@@ -66,10 +66,10 @@ fun ChatScreen(
     mensajes: List<Mensaje> = emptyList(),
     opciones: Map<String, List<String>> = emptyMap(),
     seleccionados: Map<String, String?>,
-    onSeleccion: (grupo: String, opcion: String?) -> Unit
+    onSeleccion: (grupo: String, opcion: String?) -> Unit,
+    uiState: UiState
 ) {
     val openBottomSheet = remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -89,6 +89,11 @@ fun ChatScreen(
                 Text(text = text)
             }
         }
+        if (uiState == UiState.Loading){
+            MessageBubbleAIText(
+                texto = obtenerFraseAleatoria()
+            )
+        }
         Text(text = "Mensajes generados por Gemini 2.0 Flash-Lite", fontSize = 10.sp)
 
         MessageInputBar(onSendMessage = onSendMessage, settings = { openBottomSheet.value = true })
@@ -101,7 +106,21 @@ fun ChatScreen(
         )
     }
 }
-
+fun obtenerFraseAleatoria(): String {
+    val frases = listOf(
+        "Generando respuesta...",
+        "Un momento...",
+        "Cargando...",
+        "Esperando respuesta...",
+        "Dame un segundo...",
+        "Estoy en eso...",
+        "Esto tomará solo un momento...",
+        "Ya casi está...",
+        "Buscando la mejor respuesta...",
+        "Haciendo magia..."
+    )
+    return frases.random()
+}
 @Composable
 fun MessageInputBar(
     modifier: Modifier = Modifier,
@@ -144,8 +163,6 @@ fun MessageInputBar(
                     IconButton(onClick = {
                         onSendMessage(text)
                         text = ""
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
                     },enabled = (text.isNotEmpty() && text.isNotBlank()) ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
@@ -174,6 +191,9 @@ fun ChatHistory(
     modifier: Modifier = Modifier
 ){
     val lazyListState = rememberLazyListState()
+    LaunchedEffect(mensajes.size){
+        lazyListState.scrollToItem(mensajes.size - 1)
+    }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         state = lazyListState
@@ -256,6 +276,37 @@ fun MessageBubbleAI(
             Toast.makeText(context, "Texto copiado al portapapeles", Toast.LENGTH_SHORT).show()
         }) {
             Icon(Icons.Filled.ContentCopy, contentDescription = "Copy" )
+        }
+
+    }
+}
+
+@Composable
+fun MessageBubbleAIText(
+    texto: String
+){
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 60.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Button(
+            onClick = { /*TODO*/ },
+            shape =
+            RoundedCornerShape(
+                topStart = 25.dp,
+                topEnd = 25.dp,
+                bottomStart = 25.dp,
+                bottomEnd = 25.dp
+            ),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = Color.Black
+            )
+        ) {
+            texto.let { Text(text = it,
+                color = MaterialTheme.colorScheme.onBackground) }
         }
 
     }

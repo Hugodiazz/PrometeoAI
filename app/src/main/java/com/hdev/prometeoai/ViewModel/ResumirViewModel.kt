@@ -1,5 +1,6 @@
 package com.hdev.prometeoai.ViewModel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -10,19 +11,33 @@ import com.google.ai.client.generativeai.type.content
 import com.hdev.prometeoai.BuildConfig
 import com.hdev.prometeoai.Model.Mensaje
 import com.hdev.prometeoai.Model.Rol
+import com.hdev.prometeoai.UiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ResumirViewModel: ViewModel(){
+    private val _uiState: MutableStateFlow<UiState> =
+        MutableStateFlow(UiState.Initial)
+    val uiState: StateFlow<UiState> =
+        _uiState.asStateFlow()
+
     private val generativeModel = GenerativeModel(
         modelName = "gemini-2.0-flash-lite",
         apiKey = BuildConfig.apiKey
     )
-    private var chat = generativeModel.startChat(history = mutableListOf())
+
+    //private var chat = generativeModel.startChat(history = mutableListOf())
+
+    val opciones: Map<String, List<String>> = mapOf(
+        "Tono" to listOf("Amigable", "Motivador", "Neutro", "Reflexivo", "Persuasivo"),
+        "Complejidad" to listOf("Sencillo", "Intermedio", "Avanzado", "Apto para niños"),
+        "Estilo" to listOf("Académico", "Creativo", "Informal", "Jurídico", "Literario", "Narrativo","Periodístico", "Profesional","Técnico"),
+    )
 
     private val _messages = MutableStateFlow<List<Mensaje>>(emptyList())
     val messages: StateFlow<List<Mensaje>> get() = _messages
@@ -36,26 +51,27 @@ class ResumirViewModel: ViewModel(){
         viewModelScope.launch {
             _messages.update { it + Mensaje(texto = "Bienvenido al modo de reescritura \nIngresa un texto y presiona enviar o configura los parametros en el icono ⚙\uFE0F", rol = Rol.IA) }
         }
-
     }
     fun resumirTexto(texto: String){
         viewModelScope.launch {
             try {
                 val prompt = CrearPrompt(texto)
-                chat.history.add(content(role = "user") { text(prompt) })
+                _messages.update { it + Mensaje(texto = prompt, rol = Rol.USER) }
+                _uiState.value = UiState.Loading
+                //chat.history.add(content(role = "user") { text(prompt) })
                 /*
                 generativeModel.countTokens(prompt).let { tokenCount ->
                     println("Token count: ${tokenCount.totalTokens}")
                 }
                  */
 
-                _messages.update { it + Mensaje(texto = prompt, rol = Rol.USER) }
-
-                val iaResponse = chat.sendMessage(content(role = "user") { text(prompt) })
+                //val iaResponse = chat.sendMessage(content(role = "user") { text(prompt) })
+                val iaResponse = generativeModel.generateContent(prompt)
                 _messages.update { it + Mensaje(texto = iaResponse.text.toString(), rol = Rol.IA) }
                 // solicitudes de hoy
+                _uiState.value = UiState.Success
             }catch (e: Exception) {
-                _messages.update { it + Mensaje(texto = "Error al generar respuesta, vuelve a intentarlo", rol = Rol.IA) }
+                _messages.update { it + Mensaje(texto = "Error al generar respuesta, vuelve a intentarlo: ${e}", rol = Rol.IA) }
             }
         }
     }
@@ -64,20 +80,20 @@ class ResumirViewModel: ViewModel(){
         //Tono, Complejidad, estilo, longitud
         val opciones = obtenerSeleccionados()
 
-        if (opciones.isEmpty()) {
+        if (opciones.all { it.isEmpty() }) {
             return "Reescribe el siguiente texto: $texto"
         }
 
         var prompt = "Reescribe el siguiente texto: ${texto} \n" + "Ten en cuenta los siguientes aspectos:"
 
-        if (!opciones[0].isNullOrEmpty()){
+        if (opciones[0].isNotEmpty()){
             prompt += "\n* Debe ser redactado con un tono ${opciones[0]} "
         }
-        if (!opciones[1].isNullOrEmpty()){
+        if (opciones[1].isNotEmpty()){
             prompt += "\n* La complejidad del texto de ser ${opciones[1]} "
         }
-        if (!opciones[2].isNullOrEmpty()){
-            prompt += "\n* El estilo del texto de ser ${opciones[2]} "
+        if (opciones[2].isNotEmpty()){
+            prompt += "\n* El estilo del texto debe ser ${opciones[2]} "
         }
         return prompt
     }
@@ -99,11 +115,19 @@ class ResumirViewModel: ViewModel(){
      */
 
     fun obtenerSeleccionados(): List<String>  {
-        var opciones :MutableList<String> = mutableListOf()
-        for ((grupo, opcion) in _seleccionados.value) {
-            opciones.add(opcion ?: "")
+        var opcionesnuevas :MutableList<String> = mutableListOf()
+
+        for(i in opciones){
+            val grupo = i.key
+            val opcion = _seleccionados.value[grupo]
+            if (opcion != null) {
+                opcionesnuevas.add(opcion)
+            }else{
+                opcionesnuevas.add("")
+            }
         }
-        return opciones
+
+        return opcionesnuevas
 
     }
 

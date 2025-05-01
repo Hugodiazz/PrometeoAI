@@ -18,10 +18,10 @@ sealed interface UiState {
     /**
      * Text has been generated
      */
-    data class Success(val outputText: String) : UiState
+    object Success : UiState
 
     /**
      * There was an error generating text
      */
-    data class Error(val errorMessage: String) : UiState
+    object Error : UiState
 }
