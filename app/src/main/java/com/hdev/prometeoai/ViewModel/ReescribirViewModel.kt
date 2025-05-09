@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ResumirViewModel: ViewModel(){
+class ReescribirViewModel: ViewModel(){
     private val _uiState: MutableStateFlow<UiState> =
         MutableStateFlow(UiState.Initial)
     val uiState: StateFlow<UiState> =
@@ -24,11 +24,12 @@ class ResumirViewModel: ViewModel(){
         apiKey = BuildConfig.apiKey
     )
 
+    //private var chat = generativeModel.startChat(history = mutableListOf())
+
     val opciones: Map<String, List<String>> = mapOf(
-        "Nivel de comprensión" to listOf("Extremo", "Moderado", "Detallado"),
-        "Enfoque" to listOf("General", "Por sección", "Por párrafo"),
-        "Estructura" to listOf("Viñetas", "Párrafo continuo", "Jerárquica"),
-        "Longitud" to listOf("5 palabras clave", "Breve","Media", "Extensa")
+        "Tono" to listOf("Amigable", "Motivador", "Neutro", "Reflexivo", "Persuasivo"),
+        "Complejidad" to listOf("Sencillo", "Intermedio", "Avanzado", "Apto para niños"),
+        "Estilo" to listOf("Académico", "Creativo", "Informal", "Jurídico", "Literario", "Narrativo","Periodístico", "Profesional","Técnico"),
     )
 
     private val _messages = MutableStateFlow<List<Mensaje>>(emptyList())
@@ -41,19 +42,26 @@ class ResumirViewModel: ViewModel(){
 
     init {
         viewModelScope.launch {
-            _messages.update { it + Mensaje(texto = "Bienvenido al modo de RESUMEN \nIngresa un texto y presiona enviar o configura los parametros en el icono ⚙\uFE0F", rol = Rol.IA) }
+            _messages.update { it + Mensaje(texto = "Bienvenido al modo de REESCRITURA \nIngresa un texto y presiona enviar o configura los parametros en el icono ⚙\uFE0F", rol = Rol.IA) }
         }
     }
-    fun resumirTexto(texto: String){
+    fun reescribirTexto(texto: String){
         viewModelScope.launch {
             try {
                 val prompt = CrearPrompt(texto)
                 _messages.update { it + Mensaje(texto = prompt, rol = Rol.USER) }
                 _uiState.value = UiState.Loading
+                //chat.history.add(content(role = "user") { text(prompt) })
+                /*
+                generativeModel.countTokens(prompt).let { tokenCount ->
+                    println("Token count: ${tokenCount.totalTokens}")
+                }
+                 */
 
+                //val iaResponse = chat.sendMessage(content(role = "user") { text(prompt) })
                 val iaResponse = generativeModel.generateContent(prompt)
                 _messages.update { it + Mensaje(texto = iaResponse.text.toString(), rol = Rol.IA) }
-
+                // solicitudes de hoy
                 _uiState.value = UiState.Success
             }catch (e: Exception) {
                 _uiState.value = UiState.Error
@@ -63,29 +71,42 @@ class ResumirViewModel: ViewModel(){
     }
 
     fun CrearPrompt(texto: String): String{
-        //Nivel de comprensión, Enfoque, Estructura, longitud
+        //Tono, Complejidad, estilo, longitud
         val opciones = obtenerSeleccionados()
 
         if (opciones.all { it.isEmpty() }) {
-            return "Resume el siguiente tema: $texto"
+            return "Reescribe el siguiente texto: $texto"
         }
 
-        var prompt = "Resume el siguiente texto: ${texto} \n" + "Ten en cuenta los siguientes aspectos:"
+        var prompt = "Reescribe el siguiente texto: ${texto} \n" + "Ten en cuenta los siguientes aspectos:"
 
         if (opciones[0].isNotEmpty()){
-            prompt += "\n* Debe ser resumido con un nivel de comprensión ${opciones[0]} del original"
+            prompt += "\n* Debe ser redactado con un tono ${opciones[0]} "
         }
         if (opciones[1].isNotEmpty()){
-            prompt += "\n* El enfoque del resumen debe ser ${opciones[1]} "
+            prompt += "\n* La complejidad del texto de ser ${opciones[1]} "
         }
         if (opciones[2].isNotEmpty()){
-            prompt += "\n* La estructura debe ser ${opciones[2]} "
-        }
-        if (opciones[3].isNotEmpty()){
-            prompt += "\n* La longitud debe ser ${opciones[3]} "
+            prompt += "\n* El estilo del texto debe ser ${opciones[2]} "
         }
         return prompt
     }
+    /*
+    Funcion de prueba
+    fun resumirTexto(texto: String){
+        viewModelScope.launch {
+            try{
+                //Imprime las opciones
+                chat.history.add(content(role = "user") { text(imprimirSeleccionados()) })
+                _messages.update { it + Mensaje(texto = imprimirSeleccionados(), rol = Rol.USER) }
+                
+            }catch (e: Exception){
+                _messages.update { it + Mensaje(texto = "Error al generar respuesta, vuelve a intentarlo", rol = Rol.IA) }
+            }
+        }
+    }
+
+     */
 
     private fun obtenerSeleccionados(): List<String>  {
         var opcionesnuevas :MutableList<String> = mutableListOf()

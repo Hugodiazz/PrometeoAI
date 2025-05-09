@@ -3,30 +3,29 @@ package com.hdev.prometeoai.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.hdev.prometeoai.ViewModel.ReescribirViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hdev.prometeoai.ViewModel.ConversationViewModel
 
 @Composable
-fun ReescribirScreen(
-    viewModel: ReescribirViewModel = viewModel()
-) {
+fun ConversationScreen(
+    viewModel: ConversationViewModel = viewModel()
+){
 
     val mensajes by viewModel.messages.collectAsState()
-    val opciones = viewModel.opciones
+    //opciones vacias
+    val opciones : Map<String, List<String>> = emptyMap()
     val uiState by viewModel.uiState.collectAsState()
-    val seleccionados by viewModel.seleccionados.collectAsState()
+    val seleccionados : Map<String, String?> = emptyMap()
 
     ChatScreen(
         text = "Bienvenido",
         mensajes = mensajes,
         onSendMessage = { texto ->
-            viewModel.reescribirTexto(texto)
+            viewModel.conversar(texto)
         },
         opciones = opciones,
         seleccionados = seleccionados,
-        onSeleccion = { grupo, opcion ->
-            viewModel.seleccionarOpcion(grupo, opcion)
-        },
+        onSeleccion = { grupo, opcion -> {}},
         uiState = uiState
     )
 }

@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,9 +22,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -46,6 +49,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -96,7 +100,15 @@ fun ChatScreen(
         }
         Text(text = "Mensajes generados por Gemini 2.0 Flash-Lite", fontSize = 10.sp)
 
-        MessageInputBar(onSendMessage = onSendMessage, settings = { openBottomSheet.value = true })
+        if(opciones.isEmpty()){
+            MessageInputBar(
+                onSendMessage = onSendMessage
+            )
+        }else{
+
+            MessageInputBar(onSendMessage = onSendMessage, settings = { openBottomSheet.value = true })
+        }
+
         MyModalBottomSheet(
             openBottomSheet = openBottomSheet.value,
             onDismissRequest = { openBottomSheet.value = false },
@@ -186,6 +198,59 @@ fun MessageInputBar(
 }
 
 @Composable
+fun MessageInputBar(
+    modifier: Modifier = Modifier,
+    onSendMessage: (String) -> Unit
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0 // Detecta si el teclado está activo
+    val focusManager = LocalFocusManager.current
+
+    var text by remember { mutableStateOf("") }
+    val bottomPadding = if (imeVisible) 15.dp else 10.dp
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 10.dp, bottom = bottomPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        OutlinedTextField(
+            value = text,
+            maxLines = 5,
+            onValueChange = { text = it },
+            label = { Text("Pídele algo a Prometeo") },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(20.dp),
+            trailingIcon = {
+                if(!imeVisible && text.isEmpty() || text.isBlank() ){
+                    IconButton(onClick = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.KeyboardArrowDown,
+                            contentDescription = "Ocultar teclado"
+                        )
+                    }
+                }else{
+                    IconButton(onClick = {
+                        onSendMessage(text)
+                        text = ""
+                    },enabled = (text.isNotEmpty() && text.isNotBlank()) ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Enviar"
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
 fun ChatHistory(
     mensajes: List<Mensaje>,
     modifier: Modifier = Modifier
@@ -218,25 +283,24 @@ fun MessageBubbleUser(
         modifier = Modifier
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.End
-
     ) {
-
-        Button(
-            onClick = { /*TODO*/ },
-            shape =
-            RoundedCornerShape(
-                topStart = 25.dp,
-                topEnd = 25.dp,
-                bottomStart = 25.dp,
-                bottomEnd = 25.dp
-            ),
-            modifier = Modifier.padding(start = 60.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red
-            )
-        ) {
-            mensaje.texto.let { Text(text = it, color = Color.White) }
-        }
+            SelectionContainer(
+                modifier = Modifier.padding(start = 60.dp).background(
+                    color = Color.Red,
+                    shape = RoundedCornerShape(
+                        topStart = 25.dp,
+                        topEnd = 25.dp,
+                        bottomStart = 25.dp,
+                        bottomEnd = 25.dp
+                    )
+                ).padding(4.dp)
+            ){
+                Text(
+                    text = mensaje.texto,
+                    color = Color.White,
+                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 20.dp)
+                )
+            }
     }
 }
 
@@ -250,25 +314,24 @@ fun MessageBubbleAI(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 60.dp),
+            .padding(end = 40.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Button(
-            onClick = { /*TODO*/ },
-            shape =
-            RoundedCornerShape(
-                topStart = 25.dp,
-                topEnd = 25.dp,
-                bottomStart = 25.dp,
-                bottomEnd = 25.dp
-            ),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.Black
+        SelectionContainer(
+            modifier = Modifier.padding(end = 60.dp).background(
+                color = Color.Transparent,
+                shape = RoundedCornerShape(
+                    topStart = 25.dp,
+                    topEnd = 25.dp,
+                    bottomStart = 25.dp,
+                    bottomEnd = 25.dp
+                )
+            ).padding(4.dp)
+        ){
+            Text(
+                text = mensaje.texto,
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp)
             )
-        ) {
-            mensaje.texto.let { Text(text = it,
-                color = MaterialTheme.colorScheme.onBackground) }
         }
         IconButton(onClick = {
             val clip = ClipData.newPlainText("Texto guardado en el portapapeles", mensaje.texto)
@@ -288,7 +351,7 @@ fun MessageBubbleAIText(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 60.dp),
+            .padding(end = 40.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Button(
@@ -335,7 +398,7 @@ fun MessageUser(){
         MessageBubbleUser(
             mensaje = Mensaje(
                 id = "1",
-                texto = "Hola",
+                texto = "Hola, este es un texto que debo de hacer mas y mas grnade solo para ver como es que se muestra en el componente final, vaya vaya tacubaya",
                 rol = Rol.USER,
             )
         )

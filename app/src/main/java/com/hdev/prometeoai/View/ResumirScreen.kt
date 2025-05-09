@@ -3,13 +3,13 @@ package com.hdev.prometeoai.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.hdev.prometeoai.ViewModel.ReescribirViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hdev.prometeoai.ViewModel.ResumirViewModel
 
 @Composable
-fun ReescribirScreen(
-    viewModel: ReescribirViewModel = viewModel()
-) {
+fun ResumirScreen(
+    viewModel: ResumirViewModel = viewModel()
+){
 
     val mensajes by viewModel.messages.collectAsState()
     val opciones = viewModel.opciones
@@ -20,7 +20,7 @@ fun ReescribirScreen(
         text = "Bienvenido",
         mensajes = mensajes,
         onSendMessage = { texto ->
-            viewModel.reescribirTexto(texto)
+            viewModel.resumirTexto(texto)
         },
         opciones = opciones,
         seleccionados = seleccionados,

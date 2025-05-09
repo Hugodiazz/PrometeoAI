@@ -10,6 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Summarize
@@ -50,14 +52,14 @@ fun AppScreen(
         listOf(
             Icons.Default.Edit,
             Icons.Default.Summarize,
-            Icons.Default.Book
+            Icons.Default.ChatBubble
         )
     }
     val modos = remember {
         listOf(
             "Reescribir",
             "Resumir",
-            "Ruta de estudio"
+            "Chat"
         )
     }
 
@@ -73,8 +75,8 @@ fun AppScreen(
         content = {
             when(selectedItem) {
                 Icons.Default.Edit -> ReescribirScreen()
-                Icons.Default.Summarize -> blankScreen()
-                Icons.Default.Book -> blankScreen()
+                Icons.Default.Summarize -> ResumirScreen()
+                Icons.Default.ChatBubble -> ConversationScreen()
             }
         }
     )
