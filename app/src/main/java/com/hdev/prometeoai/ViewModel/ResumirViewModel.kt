@@ -44,6 +44,8 @@ class ResumirViewModel: ViewModel(){
             _messages.update { it + Mensaje(texto = "Bienvenido al modo de RESUMEN \nIngresa un texto y presiona enviar o configura los parametros en el icono ⚙\uFE0F", rol = Rol.IA) }
         }
     }
+
+    // Función para hacer llamado a la API, solicitando un resumen.
     fun resumirTexto(texto: String){
         viewModelScope.launch {
             try {

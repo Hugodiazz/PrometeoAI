@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -39,6 +41,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextFieldDefaults.outlinedTextFieldColors
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +63,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.ui.material3.RichText
 import com.hdev.prometeoai.Model.Mensaje
 import com.hdev.prometeoai.Model.Rol
 import com.hdev.prometeoai.UiState
@@ -129,7 +136,8 @@ fun obtenerFraseAleatoria(): String {
         "Esto tomará solo un momento...",
         "Ya casi está...",
         "Buscando la mejor respuesta...",
-        "Haciendo magia..."
+        "Haciendo magia...",
+        "Algunos mensajes pueden contener errores"
     )
     return frases.random()
 }
@@ -154,10 +162,16 @@ fun MessageInputBar(
         horizontalArrangement = Arrangement.Center
     ) {
         OutlinedTextField(
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Red,
+                unfocusedIndicatorColor = Color.Red,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
+            ),
             value = text,
             maxLines = 5,
             onValueChange = { text = it },
-            label = { Text("Pídele algo a Prometeo") },
+            placeholder = { Text("Mensaje") },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(20.dp),
             trailingIcon = {
@@ -175,6 +189,8 @@ fun MessageInputBar(
                     IconButton(onClick = {
                         onSendMessage(text)
                         text = ""
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
                     },enabled = (text.isNotEmpty() && text.isNotBlank()) ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
@@ -217,10 +233,16 @@ fun MessageInputBar(
         horizontalArrangement = Arrangement.Center
     ) {
         OutlinedTextField(
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Red,
+                unfocusedIndicatorColor = Color.Red,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
+            ),
             value = text,
             maxLines = 5,
             onValueChange = { text = it },
-            label = { Text("Pídele algo a Prometeo") },
+            label = { Text("Mensaje") },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(20.dp),
             trailingIcon = {
@@ -285,15 +307,18 @@ fun MessageBubbleUser(
         horizontalArrangement = Arrangement.End
     ) {
             SelectionContainer(
-                modifier = Modifier.padding(start = 60.dp).background(
-                    color = Color.Red,
-                    shape = RoundedCornerShape(
-                        topStart = 25.dp,
-                        topEnd = 25.dp,
-                        bottomStart = 25.dp,
-                        bottomEnd = 25.dp
+                modifier = Modifier
+                    .padding(start = 60.dp)
+                    .background(
+                        color = Color.Red,
+                        shape = RoundedCornerShape(
+                            topStart = 25.dp,
+                            topEnd = 25.dp,
+                            bottomStart = 25.dp,
+                            bottomEnd = 25.dp
+                        )
                     )
-                ).padding(4.dp)
+                    .padding(4.dp)
             ){
                 Text(
                     text = mensaje.texto,
@@ -314,24 +339,31 @@ fun MessageBubbleAI(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 40.dp),
+            .padding(end = 10.dp),
         horizontalAlignment = Alignment.Start
     ) {
         SelectionContainer(
-            modifier = Modifier.padding(end = 60.dp).background(
-                color = Color.Transparent,
-                shape = RoundedCornerShape(
-                    topStart = 25.dp,
-                    topEnd = 25.dp,
-                    bottomStart = 25.dp,
-                    bottomEnd = 25.dp
+            modifier = Modifier
+                .background(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(
+                        topStart = 25.dp,
+                        topEnd = 25.dp,
+                        bottomStart = 25.dp,
+                        bottomEnd = 25.dp
+                    )
                 )
-            ).padding(4.dp)
+                .padding(4.dp)
         ){
-            Text(
-                text = mensaje.texto,
-                modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp)
-            )
+            RichText(modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp)){
+                Markdown(
+                    mensaje.texto.trimIndent()
+                )
+//                Text(
+//                    text = mensaje.texto,
+//                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 20.dp)
+//                )
+            }
         }
         IconButton(onClick = {
             val clip = ClipData.newPlainText("Texto guardado en el portapapeles", mensaje.texto)
@@ -348,11 +380,11 @@ fun MessageBubbleAI(
 fun MessageBubbleAIText(
     texto: String
 ){
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(end = 40.dp),
-        horizontalAlignment = Alignment.Start
+        horizontalArrangement = Arrangement.Start
     ) {
         Button(
             onClick = { /*TODO*/ },
@@ -368,6 +400,12 @@ fun MessageBubbleAIText(
                 contentColor = Color.Black
             )
         ) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(end = 10.dp).size(25.dp),
+                color = Color.Red,
+                strokeWidth = 2.dp
+            )
             texto.let { Text(text = it,
                 color = MaterialTheme.colorScheme.onBackground) }
         }

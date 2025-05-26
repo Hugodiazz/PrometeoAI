@@ -73,4 +73,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation ("androidx.compose.material:material-icons-extended")
+    implementation("com.halilibo.compose-richtext:richtext-commonmark:1.0.0-alpha01")
+    implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
+
 }
